@@ -34,15 +34,16 @@
       border-color: #666;
     }
 
-    /* Preview Container */
+    /* Fixed Size Preview Container */
     #preview-container {
       position: relative;
-      width: 90vw;
-      max-width: 1920px;
-      aspect-ratio: 16 / 9;
+      width: 100%;
+      max-width: 1280px;
+      max-height: 720px;
       margin: 20px auto;
       background: #ddd;
       overflow: hidden;
+      aspect-ratio: 16 / 9; /* Maintains the aspect ratio */
     }
     #preview-image,
     #preview-video {
