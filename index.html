@@ -159,21 +159,32 @@
   </div>
 
   <!-- Overlay Buttons (Renamed to "16:9" and "9:16") -->
-  <div class="buttons-container">
-    <!-- We'll label which aspect each button is for using classes .btn-16x9 or .btn-9x16 -->
-    <button class="overlay-btn btn-16x9" data-overlay="youtube_pmax_16x9.png">
+<div class="buttons-container">
+  <!-- 16:9 buttons -->
+  <div style="text-align: center; margin-bottom: 10px;">
+    <button class="overlay-btn btn-16x9" data-overlay="youtube_pmax_1920x1080.png">
       YouTube/PMAX 16:9
     </button>
-    <button class="overlay-btn btn-9x16" data-overlay="youtube_pmax_9x16.png">
+    <button class="overlay-btn btn-16x9" data-overlay="broadcast_safe_zones_16x9.png">
+      Broadcast HD 16:9
+    </button>
+  </div>
+  
+  <hr style="width: 80%; margin: 20px auto; border: 1px solid #ccc;">
+
+  <!-- 9:16 buttons -->
+  <div style="text-align: center; margin-top: 10px;">
+    <button class="overlay-btn btn-9x16" data-overlay="youtube_pmax_1080x1920.png">
       YouTube/PMAX 9:16
     </button>
-    <button class="overlay-btn btn-9x16" data-overlay="meta_reels_9x16.png">
+    <button class="overlay-btn btn-9x16" data-overlay="meta_reels_1080x1920.png">
       Meta Reels 9:16
     </button>
-    <button class="overlay-btn btn-9x16" data-overlay="meta_stories_9x16.png">
+    <button class="overlay-btn btn-9x16" data-overlay="meta_stories_1080x1920.png">
       Meta Stories 9:16
     </button>
   </div>
+</div>
 
   <!-- Bottom row for screenshot button, aligned left -->
   <div id="bottom-row">
