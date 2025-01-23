@@ -68,16 +68,18 @@
   position: absolute;
   top: 10px;
   right: 10px;
+  z-index: 10; /* Ensure the button stays above other elements */
 }
 #exportBtn {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 5px; /* Adds extra clickable area */
+  padding: 0;
 }
 #exportBtn img {
-  width: 30px; /* Adjust to image width */
-  height: 22px; /* Adjust to image height */
+  display: block; /* Fix for alignment issues */
+  width: 30px; /* Set to image width */
+  height: 22px; /* Set to image height */
 }
 
     /* Overlay Buttons */
