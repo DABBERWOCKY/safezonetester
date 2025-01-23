@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Overlay Tester (16:9 vs 9:16)</title>
   <style>
+    /* General Body Styling */
     body {
       font-family: Arial, sans-serif;
       margin: 0; 
@@ -13,6 +14,24 @@
     h1 {
       text-align: center;
       margin: 20px;
+    }
+
+    /* Drop Zone Styling */
+    #drop-zone {
+      width: 600px;
+      height: 200px;
+      margin: 20px auto;
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      text-align: center;
+      line-height: 200px;
+      color: #999;
+      background-color: #fff;
+      cursor: pointer;
+      transition: border-color 0.2s ease;
+    }
+    #drop-zone.hover {
+      border-color: #666;
     }
 
     /* Responsive Wrapper */
@@ -26,16 +45,15 @@
       background-color: #f9f9f9;
     }
 
-    /* Scale the Preview Container Dynamically */
+    /* Preview Container */
     #preview-container {
-      width: 90vw; /* Scales to 90% of the viewport width */
-      max-width: 1920px; /* Ensures it never exceeds its original size */
-      aspect-ratio: 16 / 9; /* Maintains 16:9 aspect ratio */
       position: relative;
+      width: 90vw; /* Scales to 90% of the viewport width */
+      max-width: 1920px; /* Ensures it doesn’t exceed original size */
+      aspect-ratio: 16 / 9; /* Maintains correct aspect ratio */
       background: #ddd;
+      overflow: hidden; /* Prevent content from overflowing */
     }
-
-    /* Ensure Images/Videos Fill the Container Responsively */
     #preview-image,
     #preview-video {
       position: absolute;
@@ -63,24 +81,24 @@
       height: 100%; /* Maintains aspect ratio */
     }
 
-/* Screenshot Button */
-#screenshot-btn-container {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 10; /* Ensure the button stays above other elements */
-}
-#exportBtn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-#exportBtn img {
-  display: block; /* Fix for alignment issues */
-  width: 30px; /* Set to image width */
-  height: 22px; /* Set to image height */
-}
+    /* Screenshot Button */
+    #screenshot-btn-container {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 10; /* Ensures the button is above overlays */
+    }
+    #exportBtn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0; /* Remove extra padding around the button */
+    }
+    #exportBtn img {
+      display: block; /* Ensures proper alignment */
+      width: 30px; /* Matches your image dimensions */
+      height: 22px;
+    }
 
     /* Overlay Buttons */
     .buttons-container {
@@ -206,8 +224,7 @@
   </div>
 
   <script>
-    // JavaScript logic for drag-and-drop, video controls, and overlay toggling remains the same
-    // Resize dynamically based on aspect ratio
+    // Logic for drag-and-drop, video controls, and overlays remains unchanged.
     window.addEventListener("resize", () => {
       const previewContainer = document.getElementById("preview-container");
       const aspectRatio = 16 / 9;
@@ -224,7 +241,6 @@
       }
     });
 
-    // Trigger resize on page load to initialize sizes
     window.dispatchEvent(new Event("resize"));
   </script>
 </body>
