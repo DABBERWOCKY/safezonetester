@@ -84,8 +84,8 @@
     /* Screenshot Button */
     #screenshot-btn-container {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 2%;
+      right: 2%; /* Adjust to stay within the container */
       z-index: 10; /* Ensures the button is above overlays */
     }
     #exportBtn {
@@ -96,8 +96,9 @@
     }
     #exportBtn img {
       display: block; /* Ensures proper alignment */
-      width: 30px; /* Matches your image dimensions */
-      height: 22px;
+      width: 5%; /* Makes the button scale with the container */
+      max-width: 30px; /* Prevents the button from being too large */
+      height: auto;
     }
 
     /* Overlay Buttons */
