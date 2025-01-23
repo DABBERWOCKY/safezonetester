@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Overlay Tester (16:9 vs 9:16)</title>
   <style>
-    /* General Body Styling */
     body {
       font-family: Arial, sans-serif;
       margin: 0; 
@@ -16,7 +15,7 @@
       margin: 20px;
     }
 
-    /* Drop Zone Styling */
+    /* Drop Zone */
     #drop-zone {
       width: 600px;
       height: 200px;
@@ -34,65 +33,63 @@
       border-color: #666;
     }
 
-    /* Fixed Size Preview Container */
+    /* Preview Container */
     #preview-container {
       position: relative;
-      width: 100%;
-      max-width: 1280px;
-      max-height: 720px;
-      margin: 20px auto;
+      width: 600px;
+      margin: 0 auto 20px auto; 
       background: #ddd;
-      overflow: hidden;
-      aspect-ratio: 16 / 9; /* Maintains the aspect ratio */
     }
     #preview-image,
     #preview-video {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
       display: none;
+      max-width: 100%;
+      height: auto; /* keep aspect ratio */
     }
 
-    /* Overlays */
+    /* Container for multiple stacked overlays */
     #overlay-container {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      pointer-events: none;
+      pointer-events: none; /* let clicks pass through to video */
     }
     .overlay-img {
-      width: 100%;
-      height: 100%;
       position: absolute;
       top: 0;
       left: 0;
+      width: 100%;
+      height: 100%;
     }
 
-    /* Export Screenshot Button */
-    #export-row {
+    /* Custom Video Controls (below the video) */
+    #custom-controls {
+      width: 600px;
+      margin: 10px auto;
       text-align: center;
-      margin-top: 20px;
+      display: none; /* hidden unless we have a video */
+      font-size: 14px;
     }
-    #exportBtn {
-      padding: 10px 20px;
-      background-color: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
+    #playPauseBtn {
+      padding: 6px 16px;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      margin: 0 5px;
     }
-    #exportBtn:hover {
-      background-color: #0056b3;
+    #seekBar {
+      width: 300px;
+      margin: 0 10px;
+      cursor: pointer;
+      vertical-align: middle;
+    }
+    #timeDisplay {
+      display: inline-block;
+      min-width: 60px;
+      text-align: right;
     }
 
-    /* Overlay Buttons */
+    /* Overlay & screenshot buttons */
     .buttons-container {
       text-align: center;
       margin: 20px;
@@ -106,96 +103,332 @@
       border: 1px solid #ccc;
       border-radius: 4px;
     }
+    /* Darkened style when active (overlay toggled on) */
     .overlay-btn.active {
       background-color: #666;
-      color: white;
+      color: #fff;
       border-color: #333;
     }
+    /* If a button is disabled, we also want to show a grayed-out style */
     .overlay-btn:disabled {
       cursor: not-allowed;
       opacity: 0.5;
     }
 
-    /* Horizontal Line */
-    hr {
-      width: 80%;
-      margin: 20px auto;
+    /* The bottom row for screenshot or other actions, aligned left under the container */
+    #bottom-row {
+      width: 600px;
+      margin: 0 auto 40px auto;
+      text-align: left;
+    }
+    #exportBtn {
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: #eee;
       border: 1px solid #ccc;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
   <h1>Drag & Drop or Click to Browse</h1>
 
-  <!-- Hidden file input -->
-  <input type="file" id="file-input" accept="image/*,video/*" style="display:none;">
+  <!-- Hidden file input for main image/video -->
+  <input
+    type="file"
+    id="file-input"
+    accept="image/*,video/*"
+    style="display:none;"
+  >
 
   <div id="drop-zone">Drop your file here (or click to browse)</div>
 
-  <!-- Preview Container -->
+  <!-- Preview Container (image or video + overlays) -->
   <div id="preview-container">
     <img id="preview-image" alt="Preview Image">
-    <video id="preview-video" controls></video>
+    <video id="preview-video"></video>
     <div id="overlay-container"></div>
   </div>
 
-  <!-- Custom Buttons -->
-  <div class="buttons-container">
-    <div>
-      <button class="overlay-btn btn-16x9" data-overlay="youtube_pmax_1920x1080.png">YouTube/PMAX 16:9</button>
-      <button class="overlay-btn btn-16x9" data-overlay="broadcast_safe_zones_16x9.png">Broadcast HD 16:9</button>
-    </div>
-    <hr>
-    <div>
-      <button class="overlay-btn btn-9x16" data-overlay="youtube_pmax_1080x1920.png">YouTube/PMAX 9:16</button>
-      <button class="overlay-btn btn-9x16" data-overlay="meta_reels_1080x1920.png">Meta Reels 9:16</button>
-      <button class="overlay-btn btn-9x16" data-overlay="meta_stories_1080x1920.png">Meta Stories 9:16</button>
-    </div>
+  <!-- Custom Video Controls BELOW the video -->
+  <div id="custom-controls">
+    <button id="playPauseBtn">Play</button>
+    <input type="range" id="seekBar" min="0" max="100" value="0">
+    <span id="timeDisplay">0:00 / 0:00</span>
   </div>
 
-  <!-- Export Button -->
-  <div id="export-row">
+  <!-- Overlay Buttons (Renamed to "16:9" and "9:16") -->
+  <div class="buttons-container">
+    <!-- We'll label which aspect each button is for using classes .btn-16x9 or .btn-9x16 -->
+    <button class="overlay-btn btn-16x9" data-overlay="youtube_pmax_16x9.png">
+      YouTube/PMAX 16:9
+    </button>
+    <button class="overlay-btn btn-9x16" data-overlay="youtube_pmax_9x16.png">
+      YouTube/PMAX 9:16
+    </button>
+    <button class="overlay-btn btn-9x16" data-overlay="meta_reels_9x16.png">
+      Meta Reels 9:16
+    </button>
+    <button class="overlay-btn btn-9x16" data-overlay="meta_stories_9x16.png">
+      Meta Stories 9:16
+    </button>
+  </div>
+
+  <!-- Bottom row for screenshot button, aligned left -->
+  <div id="bottom-row">
     <button id="exportBtn">Export Screenshot</button>
   </div>
 
   <script>
-    // File handling logic
-    const dropZone = document.getElementById("drop-zone");
-    const fileInput = document.getElementById("file-input");
-    const previewImage = document.getElementById("preview-image");
-    const previewVideo = document.getElementById("preview-video");
+    const dropZone       = document.getElementById('drop-zone');
+    const fileInput      = document.getElementById('file-input');
+    const previewImage   = document.getElementById('preview-image');
+    const previewVideo   = document.getElementById('preview-video');
+    const overlayContainer = document.getElementById('overlay-container');
 
-    dropZone.addEventListener("click", () => fileInput.click());
-    dropZone.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      dropZone.classList.add("hover");
+    const customControls = document.getElementById('custom-controls');
+    const playPauseBtn   = document.getElementById('playPauseBtn');
+    const seekBar        = document.getElementById('seekBar');
+    const timeDisplay    = document.getElementById('timeDisplay');
+    const exportBtn      = document.getElementById('exportBtn');
+
+    // Grab references to the overlay buttons
+    // We'll use classes .btn-16x9 and .btn-9x16 to enable/disable them
+    const btn16x9 = document.querySelectorAll('.btn-16x9');
+    const btn9x16 = document.querySelectorAll('.btn-9x16');
+
+    // === CLICK TO BROWSE (main file) ===
+    dropZone.addEventListener('click', () => {
+      fileInput.click();
     });
-    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("hover"));
-    dropZone.addEventListener("drop", (e) => {
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (file) handleFile(file);
+    });
+
+    // === DRAG & DROP ===
+    dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
-      dropZone.classList.remove("hover");
+      e.stopPropagation();
+      dropZone.classList.add('hover');
+    });
+    dropZone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove('hover');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove('hover');
       const file = e.dataTransfer.files[0];
-      handleFile(file);
-    });
-    fileInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
+      if (!file) return;
       handleFile(file);
     });
 
+    // === HANDLE FILE (image or video) ===
     function handleFile(file) {
       const fileURL = URL.createObjectURL(file);
 
-      if (file.type.startsWith("image/")) {
+      // If it's an image
+      if (file.type.startsWith('image/')) {
+        previewVideo.src = '';
+        previewVideo.style.display = 'none';
+        customControls.style.display = 'none';
+
         previewImage.src = fileURL;
-        previewImage.style.display = "block";
-        previewVideo.style.display = "none";
-      } else if (file.type.startsWith("video/")) {
+        previewImage.style.display = 'block';
+
+        // We must wait for the image to load to get correct dimensions
+        previewImage.onload = () => {
+          const ratio = previewImage.naturalWidth / previewImage.naturalHeight;
+          setButtonLockByAspect(ratio);
+        };
+
+      // If it's a video
+      } else if (file.type.startsWith('video/')) {
+        previewImage.src = '';
+        previewImage.style.display = 'none';
+
         previewVideo.src = fileURL;
-        previewVideo.style.display = "block";
-        previewImage.style.display = "none";
+        previewVideo.style.display = 'block';
+        customControls.style.display = 'block';
+        setupCustomVideo(previewVideo);
+
       } else {
-        alert("Unsupported file type. Please upload an image or video.");
+        alert('Unsupported file type! Please drop an image or video file.');
       }
+    }
+
+    // === CUSTOM VIDEO CONTROLS ===
+    function setupCustomVideo(videoEl) {
+      videoEl.pause();
+      videoEl.currentTime = 0;
+      playPauseBtn.textContent = 'Play';
+      seekBar.value = 0;
+      timeDisplay.textContent = '0:00 / 0:00';
+
+      // Wait for metadata to get correct dimensions
+      videoEl.onloadedmetadata = () => {
+        // For aspect ratio, do width/height
+        const ratio = videoEl.videoWidth / videoEl.videoHeight;
+        setButtonLockByAspect(ratio);
+      };
+
+      videoEl.onclick = () => togglePlayPause(videoEl);
+      playPauseBtn.onclick = () => togglePlayPause(videoEl);
+
+      videoEl.addEventListener('timeupdate', () => updateTimeDisplay(videoEl));
+    }
+
+    function togglePlayPause(videoEl) {
+      if (videoEl.paused) {
+        videoEl.play();
+        playPauseBtn.textContent = 'Pause';
+      } else {
+        videoEl.pause();
+        playPauseBtn.textContent = 'Play';
+      }
+    }
+
+    function updateTimeDisplay(videoEl) {
+      if (isNaN(videoEl.duration)) return;
+      const cur = formatTime(videoEl.currentTime);
+      const dur = formatTime(videoEl.duration);
+      timeDisplay.textContent = `${cur} / ${dur}`;
+      const pct = (videoEl.currentTime / videoEl.duration) * 100;
+      seekBar.value = pct;
+    }
+
+    seekBar.addEventListener('input', () => {
+      if (previewVideo && !isNaN(previewVideo.duration)) {
+        const pct = parseFloat(seekBar.value) / 100;
+        previewVideo.currentTime = pct * previewVideo.duration;
+      }
+    });
+
+    function formatTime(sec) {
+      if (!sec || sec < 0) sec = 0;
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = Math.floor(sec % 60);
+      if (h > 0) {
+        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      } else {
+        return `${m}:${s.toString().padStart(2, '0')}`;
+      }
+    }
+
+    // === LOCK / UNLOCK OVERLAY BUTTONS BY ASPECT ===
+    function setButtonLockByAspect(ratio) {
+      // If ratio >= 1, assume 16:9, else 9:16.
+      // Disable the other set so it becomes gray & unclickable.
+      if (ratio >= 1) {
+        // We have a 16:9 asset => disable 9:16 overlays
+        enableButtons(btn16x9);
+        disableButtons(btn9x16);
+      } else {
+        // We have a 9:16 asset => disable 16:9 overlays
+        enableButtons(btn9x16);
+        disableButtons(btn16x9);
+      }
+    }
+
+    function enableButtons(buttonList) {
+      buttonList.forEach(btn => {
+        btn.disabled = false;
+      });
+    }
+    function disableButtons(buttonList) {
+      buttonList.forEach(btn => {
+        btn.disabled = true;
+        // If it's active, remove its overlay
+        if (btn.classList.contains('active')) {
+          forceRemoveOverlay(btn);
+        }
+      });
+    }
+
+    // Remove an overlay forcibly
+    function forceRemoveOverlay(button) {
+      const overlayFile = button.getAttribute('data-overlay');
+      const overlayId = 'overlay-' + overlayFile.replace(/[^\w-]/g, '_');
+      const existing = document.getElementById(overlayId);
+      if (existing) {
+        existing.remove();
+      }
+      button.classList.remove('active');
+    }
+
+    // === TOGGLE OVERLAYS ===
+    const overlayButtons = document.querySelectorAll('.overlay-btn');
+    overlayButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // If the button is disabled, do nothing
+        if (btn.disabled) return;
+        toggleOverlay(btn);
+      });
+    });
+
+    function toggleOverlay(button) {
+      const overlayFile = button.getAttribute('data-overlay');
+      const overlayId = 'overlay-' + overlayFile.replace(/[^\w-]/g, '_');
+
+      let existing = document.getElementById(overlayId);
+      if (!existing) {
+        // Create new overlay
+        const newOverlayImg = document.createElement('img');
+        newOverlayImg.src = overlayFile;
+        newOverlayImg.id = overlayId;
+        newOverlayImg.classList.add('overlay-img');
+        overlayContainer.appendChild(newOverlayImg);
+
+        button.classList.add('active');
+      } else {
+        // Remove existing overlay
+        existing.remove();
+        button.classList.remove('active');
+      }
+    }
+
+    // === EXPORT SCREENSHOT BUTTON ===
+    exportBtn.addEventListener('click', exportScreenshot);
+
+    function exportScreenshot() {
+      const container = document.getElementById('preview-container');
+      const width = container.offsetWidth;
+      const height = container.offsetHeight;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+
+      // Draw the image or current video frame
+      if (previewVideo.style.display !== 'none') {
+        // If video is visible, draw current frame
+        ctx.drawImage(previewVideo, 0, 0, width, height);
+      } else if (previewImage.style.display !== 'none') {
+        // If image is visible
+        ctx.drawImage(previewImage, 0, 0, width, height);
+      }
+
+      // Draw all overlays
+      const overlays = document.querySelectorAll('#overlay-container .overlay-img');
+      overlays.forEach(img => {
+        ctx.drawImage(img, 0, 0, width, height);
+      });
+
+      // Convert canvas to data URL
+      const dataURL = canvas.toDataURL('image/png');
+
+      // Create a link to download the file
+      const link = document.createElement('a');
+      link.download = 'screenshot.png';
+      link.href = dataURL;
+      link.click();
+      link.remove();
     }
   </script>
 </body>
