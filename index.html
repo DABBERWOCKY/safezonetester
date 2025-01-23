@@ -36,18 +36,15 @@
     /* Preview Container */
     #preview-container {
       position: relative;
-      /* Removed: width: 600px; */
-      display: inline-block;      /* Let the container shrink-wrap to content width */
-      max-height: 1280px;         /* Limit viewer height to 1280px */
+      width: 600px;
       margin: 0 auto 20px auto; 
       background: #ddd;
-      vertical-align: top;        /* So it aligns nicely if there's text, etc. */
     }
     #preview-image,
     #preview-video {
       display: none;
-      width: auto;        /* No fixed width, keep aspect ratio */
-      max-height: 100%;   /* Scale down to fit container’s max-height */
+      max-width: 100%;
+      height: auto; /* keep aspect ratio */
     }
 
     /* Container for multiple stacked overlays */
@@ -69,7 +66,7 @@
 
     /* Custom Video Controls (below the video) */
     #custom-controls {
-      width: 600px;  /* keep or adjust as desired */
+      width: 600px;
       margin: 10px auto;
       text-align: center;
       display: none; /* hidden unless we have a video */
@@ -120,7 +117,7 @@
 
     /* The bottom row for screenshot or other actions, aligned left under the container */
     #bottom-row {
-      width: 600px;  /* keep or adjust as desired */
+      width: 600px;
       margin: 0 auto 40px auto;
       text-align: center;
     }
@@ -162,41 +159,41 @@
   </div>
 
   <!-- Overlay Buttons (Renamed to "16:9" and "9:16") -->
-  <div class="buttons-container">
-    <!-- 16:9 buttons -->
-    <div style="text-align: center; margin-bottom: 10px;">
-      <button class="overlay-btn btn-16x9" data-overlay="youtube_pmax_1920x1080.png">
-        YouTube/PMAX 16:9
-      </button>
-      <button class="overlay-btn btn-16x9" data-overlay="broadcast_safe_zones_16x9.png">
-        Broadcast HD 16:9
-      </button>
-    </div>
-    
-    <hr style="width: 80%; margin: 20px auto; border: 1px solid #ccc;">
-
-    <!-- 9:16 buttons -->
-    <div style="text-align: center; margin-top: 10px;">
-      <button class="overlay-btn btn-9x16" data-overlay="youtube_pmax_1080x1920.png">
-        YouTube/PMAX 9:16
-      </button>
-      <button class="overlay-btn btn-9x16" data-overlay="meta_reels_1080x1920.png">
-        Meta Reels 9:16
-      </button>
-      <button class="overlay-btn btn-9x16" data-overlay="meta_stories_1080x1920.png">
-        Meta Stories 9:16
-      </button>
-    </div>
-    
-    <hr style="width: 80%; margin: 20px auto; border: 1px solid #ccc;">
-
-    <!-- screenshot button -->
-    <div style="text-align: center; margin-top: 10px;">
-      <div id="bottom-row">
-        <button id="exportBtn">Export Screenshot</button>
-      </div>
-    </div>
+<div class="buttons-container">
+  <!-- 16:9 buttons -->
+  <div style="text-align: center; margin-bottom: 10px;">
+    <button class="overlay-btn btn-16x9" data-overlay="youtube_pmax_1920x1080.png">
+      YouTube/PMAX 16:9
+    </button>
+    <button class="overlay-btn btn-16x9" data-overlay="broadcast_safe_zones_16x9.png">
+      Broadcast HD 16:9
+    </button>
   </div>
+  
+  <hr style="width: 80%; margin: 20px auto; border: 1px solid #ccc;">
+
+  <!-- 9:16 buttons -->
+  <div style="text-align: center; margin-top: 10px;">
+    <button class="overlay-btn btn-9x16" data-overlay="youtube_pmax_1080x1920.png">
+      YouTube/PMAX 9:16
+    </button>
+    <button class="overlay-btn btn-9x16" data-overlay="meta_reels_1080x1920.png">
+      Meta Reels 9:16
+    </button>
+    <button class="overlay-btn btn-9x16" data-overlay="meta_stories_1080x1920.png">
+      Meta Stories 9:16
+    </button>
+  </div>
+  
+ <hr style="width: 80%; margin: 20px auto; border: 1px solid #ccc;">
+
+ <!-- screenshot button -->
+  <div style="text-align: center; margin-top: 10px;">
+    <div id="bottom-row">
+    <button id="exportBtn">Export Screenshot</button>
+  </div>
+   
+</div>
 
   <script>
     const dropZone       = document.getElementById('drop-zone');
@@ -343,11 +340,11 @@
       // If ratio >= 1, assume 16:9, else 9:16.
       // Disable the other set so it becomes gray & unclickable.
       if (ratio >= 1) {
-        // We have a 16:9 (or landscape) => disable 9:16 overlays
+        // We have a 16:9 asset => disable 9:16 overlays
         enableButtons(btn16x9);
         disableButtons(btn9x16);
       } else {
-        // We have a 9:16 (or portrait) => disable 16:9 overlays
+        // We have a 9:16 asset => disable 16:9 overlays
         enableButtons(btn9x16);
         disableButtons(btn16x9);
       }
