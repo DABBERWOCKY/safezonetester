@@ -15,78 +15,69 @@
       margin: 20px;
     }
 
-    /* Drop Zone */
-    #drop-zone {
-      width: 600px;
-      height: 200px;
-      margin: 20px auto;
-      border: 2px dashed #ccc;
-      border-radius: 10px;
-      text-align: center;
-      line-height: 200px;
-      color: #999;
-      background-color: #fff;
-      cursor: pointer;
-      transition: border-color 0.2s ease;
-    }
-    #drop-zone.hover {
-      border-color: #666;
+    /* Responsive Wrapper */
+    #responsive-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100vh; /* Full height of the viewport */
+      overflow: hidden;
+      background-color: #f9f9f9;
     }
 
-    /* Preview Container */
+    /* Scale the Preview Container Dynamically */
     #preview-container {
-      position: relative; /* Needed for absolute positioning of the screenshot button */
-      width: 600px;
-      margin: 0 auto 20px auto; 
+      width: 90vw; /* Scales to 90% of the viewport width */
+      max-width: 1920px; /* Ensures it never exceeds its original size */
+      aspect-ratio: 16 / 9; /* Maintains 16:9 aspect ratio */
+      position: relative;
       background: #ddd;
     }
+
+    /* Ensure Images/Videos Fill the Container Responsively */
     #preview-image,
     #preview-video {
-      display: none;
-      max-width: 100%;
-      height: auto; /* keep aspect ratio */
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* Ensures proper scaling */
     }
 
-    /* Container for multiple stacked overlays */
+    /* Overlays */
     #overlay-container {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      pointer-events: none; /* let clicks pass through to video */
+      pointer-events: none; /* Let clicks pass through to video/image */
     }
     .overlay-img {
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
+      width: 100%; /* Scales with the container */
+      height: 100%; /* Maintains aspect ratio */
     }
 
-    /* Custom Video Controls */
-    #custom-controls {
-      width: 600px;
-      margin: 10px auto;
-      text-align: center;
-      display: none; /* hidden unless we have a video */
-      font-size: 14px;
+    /* Screenshot Button */
+    #screenshot-btn-container {
+      position: absolute;
+      top: 10px;
+      right: 10px;
     }
-    #playPauseBtn {
-      padding: 6px 16px;
+    #exportBtn {
+      background: none;
+      border: none;
       cursor: pointer;
-      margin: 0 5px;
+      padding: 0;
     }
-    #seekBar {
-      width: 300px;
-      margin: 0 10px;
-      cursor: pointer;
-      vertical-align: middle;
-    }
-    #timeDisplay {
-      display: inline-block;
-      min-width: 60px;
-      text-align: right;
+    #exportBtn img {
+      width: 32px;
+      height: 32px;
     }
 
     /* Overlay Buttons */
@@ -120,21 +111,30 @@
       border: 1px solid #ccc;
     }
 
-    /* Screenshot Button */
-    #screenshot-btn-container {
-      position: absolute;
-      top: 0;
-      right: 10px;
+    /* Custom Video Controls */
+    #custom-controls {
+      width: 90vw;
+      max-width: 1920px;
+      margin: 10px auto;
+      text-align: center;
+      display: none; /* Hidden unless we have a video */
+      font-size: 14px;
     }
-    #exportBtn {
-      background: none;
-      border: none;
+    #playPauseBtn {
+      padding: 6px 16px;
       cursor: pointer;
-      padding: 0;
+      margin: 0 5px;
     }
-    #exportBtn img {
-      width: 32px;
-      height: 32px;
+    #seekBar {
+      width: 300px;
+      margin: 0 10px;
+      cursor: pointer;
+      vertical-align: middle;
+    }
+    #timeDisplay {
+      display: inline-block;
+      min-width: 60px;
+      text-align: right;
     }
   </style>
 </head>
@@ -151,17 +151,20 @@
 
   <div id="drop-zone">Drop your file here (or click to browse)</div>
 
-  <!-- Preview Container -->
-  <div id="preview-container">
-    <img id="preview-image" alt="Preview Image">
-    <video id="preview-video"></video>
-    <div id="overlay-container"></div>
+  <!-- Responsive Wrapper -->
+  <div id="responsive-wrapper">
+    <!-- Preview Container -->
+    <div id="preview-container">
+      <img id="preview-image" alt="Preview Image">
+      <video id="preview-video"></video>
+      <div id="overlay-container"></div>
 
-    <!-- Screenshot Button -->
-    <div id="screenshot-btn-container">
-      <button id="exportBtn">
-        <img src="screenshot_icon_camera.png" alt="Export Screenshot">
-      </button>
+      <!-- Screenshot Button -->
+      <div id="screenshot-btn-container">
+        <button id="exportBtn">
+          <img src="screenshot_icon_camera.png" alt="Export Screenshot">
+        </button>
+      </div>
     </div>
   </div>
 
@@ -201,8 +204,26 @@
   </div>
 
   <script>
-    // Your existing JavaScript logic remains unchanged
-    // Add event listeners and functionality for drag-and-drop, overlays, and screenshots
+    // JavaScript logic for drag-and-drop, video controls, and overlay toggling remains the same
+    // Resize dynamically based on aspect ratio
+    window.addEventListener("resize", () => {
+      const previewContainer = document.getElementById("preview-container");
+      const aspectRatio = 16 / 9;
+
+      const maxWidth = window.innerWidth * 0.9;
+      const maxHeight = window.innerHeight * 0.9;
+
+      if (maxWidth / maxHeight > aspectRatio) {
+        previewContainer.style.width = `${maxHeight * aspectRatio}px`;
+        previewContainer.style.height = `${maxHeight}px`;
+      } else {
+        previewContainer.style.width = `${maxWidth}px`;
+        previewContainer.style.height = `${maxWidth / aspectRatio}px`;
+      }
+    });
+
+    // Trigger resize on page load to initialize sizes
+    window.dispatchEvent(new Event("resize"));
   </script>
 </body>
 </html>
