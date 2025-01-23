@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Overlay Tester with Custom Overlay & Screenshot</title>
+  <title>Overlay Tester (16:9 vs 9:16)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -109,6 +109,11 @@
       color: #fff;
       border-color: #333;
     }
+    /* If a button is disabled, we also want to show a grayed-out style */
+    .overlay-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
 
     /* The bottom row for screenshot or other actions, aligned left under the container */
     #bottom-row {
@@ -137,14 +142,6 @@
     style="display:none;"
   >
 
-  <!-- Hidden file input for custom overlay -->
-  <input
-    type="file"
-    id="custom-overlay-input"
-    accept="image/*"
-    style="display:none;"
-  >
-
   <div id="drop-zone">Drop your file here (or click to browse)</div>
 
   <!-- Preview Container (image or video + overlays) -->
@@ -161,24 +158,20 @@
     <span id="timeDisplay">0:00 / 0:00</span>
   </div>
 
-  <!-- Overlay Buttons -->
+  <!-- Overlay Buttons (Renamed to "16:9" and "9:16") -->
   <div class="buttons-container">
-    <button class="overlay-btn" data-overlay="youtube_pmax_1920x1080.png">
-      YouTube/PMAX 1920×1080
+    <!-- We'll label which aspect each button is for using classes .btn-16x9 or .btn-9x16 -->
+    <button class="overlay-btn btn-16x9" data-overlay="youtube_pmax_16x9.png">
+      YouTube/PMAX 16:9
     </button>
-    <button class="overlay-btn" data-overlay="youtube_pmax_1080x1920.png">
-      YouTube/PMAX 1080×1920
+    <button class="overlay-btn btn-9x16" data-overlay="youtube_pmax_9x16.png">
+      YouTube/PMAX 9:16
     </button>
-    <button class="overlay-btn" data-overlay="meta_reels_1080x1920.png">
-      Meta Reels 1080×1920
+    <button class="overlay-btn btn-9x16" data-overlay="meta_reels_9x16.png">
+      Meta Reels 9:16
     </button>
-    <button class="overlay-btn" data-overlay="meta_stories_1080x1920.png">
-      Meta Stories 1080×1920
-    </button>
-
-    <!-- Custom Overlay Button -->
-    <button class="overlay-btn" id="customOverlayBtn" data-overlay="">
-      Upload Custom Overlay
+    <button class="overlay-btn btn-9x16" data-overlay="meta_stories_9x16.png">
+      Meta Stories 9:16
     </button>
   </div>
 
@@ -188,20 +181,22 @@
   </div>
 
   <script>
-    const dropZone         = document.getElementById('drop-zone');
-    const fileInput        = document.getElementById('file-input');
-    const customOverlayInput = document.getElementById('custom-overlay-input');
-    const previewImage     = document.getElementById('preview-image');
-    const previewVideo     = document.getElementById('preview-video');
+    const dropZone       = document.getElementById('drop-zone');
+    const fileInput      = document.getElementById('file-input');
+    const previewImage   = document.getElementById('preview-image');
+    const previewVideo   = document.getElementById('preview-video');
     const overlayContainer = document.getElementById('overlay-container');
 
-    const customControls   = document.getElementById('custom-controls');
-    const playPauseBtn     = document.getElementById('playPauseBtn');
-    const seekBar          = document.getElementById('seekBar');
-    const timeDisplay      = document.getElementById('timeDisplay');
-    const exportBtn        = document.getElementById('exportBtn');
+    const customControls = document.getElementById('custom-controls');
+    const playPauseBtn   = document.getElementById('playPauseBtn');
+    const seekBar        = document.getElementById('seekBar');
+    const timeDisplay    = document.getElementById('timeDisplay');
+    const exportBtn      = document.getElementById('exportBtn');
 
-    const customOverlayBtn = document.getElementById('customOverlayBtn');
+    // Grab references to the overlay buttons
+    // We'll use classes .btn-16x9 and .btn-9x16 to enable/disable them
+    const btn16x9 = document.querySelectorAll('.btn-16x9');
+    const btn9x16 = document.querySelectorAll('.btn-9x16');
 
     // === CLICK TO BROWSE (main file) ===
     dropZone.addEventListener('click', () => {
@@ -238,25 +233,29 @@
 
       // If it's an image
       if (file.type.startsWith('image/')) {
-        previewImage.src = fileURL;
-        previewImage.style.display = 'block';
-
-        // Hide video & controls
         previewVideo.src = '';
         previewVideo.style.display = 'none';
         customControls.style.display = 'none';
 
+        previewImage.src = fileURL;
+        previewImage.style.display = 'block';
+
+        // We must wait for the image to load to get correct dimensions
+        previewImage.onload = () => {
+          const ratio = previewImage.naturalWidth / previewImage.naturalHeight;
+          setButtonLockByAspect(ratio);
+        };
+
       // If it's a video
       } else if (file.type.startsWith('video/')) {
-        previewVideo.src = fileURL;
-        previewVideo.style.display = 'block';
-        customControls.style.display = 'block';
-
-        // Hide image
         previewImage.src = '';
         previewImage.style.display = 'none';
 
+        previewVideo.src = fileURL;
+        previewVideo.style.display = 'block';
+        customControls.style.display = 'block';
         setupCustomVideo(previewVideo);
+
       } else {
         alert('Unsupported file type! Please drop an image or video file.');
       }
@@ -270,31 +269,17 @@
       seekBar.value = 0;
       timeDisplay.textContent = '0:00 / 0:00';
 
-      // Click video to toggle
-      videoEl.onclick = () => {
-        togglePlayPause(videoEl);
+      // Wait for metadata to get correct dimensions
+      videoEl.onloadedmetadata = () => {
+        // For aspect ratio, do width/height
+        const ratio = videoEl.videoWidth / videoEl.videoHeight;
+        setButtonLockByAspect(ratio);
       };
 
-      // Play/Pause button
-      playPauseBtn.onclick = () => {
-        togglePlayPause(videoEl);
-      };
+      videoEl.onclick = () => togglePlayPause(videoEl);
+      playPauseBtn.onclick = () => togglePlayPause(videoEl);
 
-      // Update duration after metadata loads
-      videoEl.addEventListener('loadedmetadata', () => {
-        updateTimeDisplay(videoEl);
-      });
-
-      // Update seek/time as it plays
-      videoEl.addEventListener('timeupdate', () => {
-        updateTimeDisplay(videoEl);
-      });
-
-      // Seek bar input
-      seekBar.addEventListener('input', () => {
-        const pct = parseFloat(seekBar.value) / 100;
-        videoEl.currentTime = pct * videoEl.duration;
-      });
+      videoEl.addEventListener('timeupdate', () => updateTimeDisplay(videoEl));
     }
 
     function togglePlayPause(videoEl) {
@@ -316,6 +301,13 @@
       seekBar.value = pct;
     }
 
+    seekBar.addEventListener('input', () => {
+      if (previewVideo && !isNaN(previewVideo.duration)) {
+        const pct = parseFloat(seekBar.value) / 100;
+        previewVideo.currentTime = pct * previewVideo.duration;
+      }
+    });
+
     function formatTime(sec) {
       if (!sec || sec < 0) sec = 0;
       const h = Math.floor(sec / 3600);
@@ -328,20 +320,59 @@
       }
     }
 
-    // === MULTIPLE OVERLAYS: Toggle on/off per button ===
+    // === LOCK / UNLOCK OVERLAY BUTTONS BY ASPECT ===
+    function setButtonLockByAspect(ratio) {
+      // If ratio >= 1, assume 16:9, else 9:16.
+      // Disable the other set so it becomes gray & unclickable.
+      if (ratio >= 1) {
+        // We have a 16:9 asset => disable 9:16 overlays
+        enableButtons(btn16x9);
+        disableButtons(btn9x16);
+      } else {
+        // We have a 9:16 asset => disable 16:9 overlays
+        enableButtons(btn9x16);
+        disableButtons(btn16x9);
+      }
+    }
+
+    function enableButtons(buttonList) {
+      buttonList.forEach(btn => {
+        btn.disabled = false;
+      });
+    }
+    function disableButtons(buttonList) {
+      buttonList.forEach(btn => {
+        btn.disabled = true;
+        // If it's active, remove its overlay
+        if (btn.classList.contains('active')) {
+          forceRemoveOverlay(btn);
+        }
+      });
+    }
+
+    // Remove an overlay forcibly
+    function forceRemoveOverlay(button) {
+      const overlayFile = button.getAttribute('data-overlay');
+      const overlayId = 'overlay-' + overlayFile.replace(/[^\w-]/g, '_');
+      const existing = document.getElementById(overlayId);
+      if (existing) {
+        existing.remove();
+      }
+      button.classList.remove('active');
+    }
+
+    // === TOGGLE OVERLAYS ===
     const overlayButtons = document.querySelectorAll('.overlay-btn');
     overlayButtons.forEach(btn => {
-      // If it's not the custom overlay button, we wire up toggle directly
-      if (btn !== customOverlayBtn) {
-        btn.addEventListener('click', () => {
-          toggleOverlay(btn);
-        });
-      }
+      btn.addEventListener('click', () => {
+        // If the button is disabled, do nothing
+        if (btn.disabled) return;
+        toggleOverlay(btn);
+      });
     });
 
     function toggleOverlay(button) {
       const overlayFile = button.getAttribute('data-overlay');
-      // Build an ID so we can remove the overlay if it's toggled off
       const overlayId = 'overlay-' + overlayFile.replace(/[^\w-]/g, '_');
 
       let existing = document.getElementById(overlayId);
@@ -355,43 +386,11 @@
 
         button.classList.add('active');
       } else {
-        // Remove overlay
+        // Remove existing overlay
         existing.remove();
         button.classList.remove('active');
       }
     }
-
-    // === CUSTOM OVERLAY BUTTON: picks a file, toggles on/off like the others ===
-    customOverlayBtn.addEventListener('click', () => {
-      // If we haven't chosen a file yet, open the file picker
-      const currentOverlay = customOverlayBtn.getAttribute('data-overlay');
-      if (!currentOverlay) {
-        customOverlayInput.click();
-      } else {
-        // There's already a file. We toggle it on/off just like others
-        toggleOverlay(customOverlayBtn);
-      }
-    });
-
-    // Once user picks a custom file
-    customOverlayInput.addEventListener('change', () => {
-      const customFile = customOverlayInput.files[0];
-      if (!customFile) return;
-
-      // If the button was already "active," remove old overlay first
-      if (customOverlayBtn.classList.contains('active')) {
-        toggleOverlay(customOverlayBtn); // remove old overlay
-      }
-
-      const fileURL = URL.createObjectURL(customFile);
-      // Set button data-overlay to the new file
-      customOverlayBtn.setAttribute('data-overlay', fileURL);
-      // Rename the button to the file's name
-      customOverlayBtn.textContent = customFile.name;
-
-      // Toggle it ON
-      toggleOverlay(customOverlayBtn);
-    });
 
     // === EXPORT SCREENSHOT BUTTON ===
     exportBtn.addEventListener('click', exportScreenshot);
