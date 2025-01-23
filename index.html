@@ -37,16 +37,17 @@
     #preview-container {
       position: relative;
       /* Removed: width: 600px; */
-      max-width: 1280px; /* Limit width to 1280px */
+      display: inline-block;      /* Let the container shrink-wrap to content width */
+      max-height: 1280px;         /* Limit viewer height to 1280px */
       margin: 0 auto 20px auto; 
       background: #ddd;
+      vertical-align: top;        /* So it aligns nicely if there's text, etc. */
     }
     #preview-image,
     #preview-video {
       display: none;
-      width: 100%;      /* Use full width of container */
-      max-width: 100%;  /* Don’t exceed container’s width */
-      height: auto;     /* Maintain aspect ratio */
+      width: auto;        /* No fixed width, keep aspect ratio */
+      max-height: 100%;   /* Scale down to fit container’s max-height */
     }
 
     /* Container for multiple stacked overlays */
@@ -68,8 +69,7 @@
 
     /* Custom Video Controls (below the video) */
     #custom-controls {
-      /* Removed: width: 600px; */
-      max-width: 1280px; /* Keep them aligned with the container */
+      width: 600px;  /* keep or adjust as desired */
       margin: 10px auto;
       text-align: center;
       display: none; /* hidden unless we have a video */
@@ -118,10 +118,9 @@
       opacity: 0.5;
     }
 
-    /* The bottom row for screenshot or other actions, aligned below the container */
+    /* The bottom row for screenshot or other actions, aligned left under the container */
     #bottom-row {
-      /* Removed: width: 600px; */
-      max-width: 1280px; /* Keep aligned with the container */
+      width: 600px;  /* keep or adjust as desired */
       margin: 0 auto 40px auto;
       text-align: center;
     }
@@ -213,6 +212,7 @@
     const exportBtn      = document.getElementById('exportBtn');
 
     // Grab references to the overlay buttons
+    // We'll use classes .btn-16x9 and .btn-9x16 to enable/disable them
     const btn16x9 = document.querySelectorAll('.btn-16x9');
     const btn9x16 = document.querySelectorAll('.btn-9x16');
 
@@ -287,6 +287,7 @@
       seekBar.value = 0;
       timeDisplay.textContent = '0:00 / 0:00';
 
+      // Wait for metadata to get correct dimensions
       videoEl.onloadedmetadata = () => {
         // For aspect ratio, do width/height
         const ratio = videoEl.videoWidth / videoEl.videoHeight;
@@ -295,6 +296,7 @@
 
       videoEl.onclick = () => togglePlayPause(videoEl);
       playPauseBtn.onclick = () => togglePlayPause(videoEl);
+
       videoEl.addEventListener('timeupdate', () => updateTimeDisplay(videoEl));
     }
 
@@ -341,9 +343,11 @@
       // If ratio >= 1, assume 16:9, else 9:16.
       // Disable the other set so it becomes gray & unclickable.
       if (ratio >= 1) {
+        // We have a 16:9 (or landscape) => disable 9:16 overlays
         enableButtons(btn16x9);
         disableButtons(btn9x16);
       } else {
+        // We have a 9:16 (or portrait) => disable 16:9 overlays
         enableButtons(btn9x16);
         disableButtons(btn16x9);
       }
@@ -379,6 +383,7 @@
     const overlayButtons = document.querySelectorAll('.overlay-btn');
     overlayButtons.forEach(btn => {
       btn.addEventListener('click', () => {
+        // If the button is disabled, do nothing
         if (btn.disabled) return;
         toggleOverlay(btn);
       });
