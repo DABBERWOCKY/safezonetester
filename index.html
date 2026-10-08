@@ -68,6 +68,25 @@
         Upload a creative to activate matching placements.
       </p>
       <div id="placement-groups" class="placement-groups"></div>
+
+      <section class="cross-format-review" aria-labelledby="cross-format-heading">
+        <div class="cross-format-heading-row">
+          <div>
+            <p class="step-label">Alternate crops</p>
+            <h3 id="cross-format-heading">Cross-format review</h3>
+          </div>
+          <p>Preview a centered crop without changing your source file.</p>
+        </div>
+        <p id="cross-format-status" class="placement-status" aria-live="polite">
+          Upload a creative to preview alternate aspect ratios.
+        </p>
+        <div class="overlay-legend" aria-label="Overlay legend">
+          <span><i class="legend-swatch cropped-swatch" aria-hidden="true"></i>Cropped out</span>
+          <span><i class="legend-swatch exclusion-swatch" aria-hidden="true"></i>Platform UI / non-safe</span>
+          <span><i class="legend-swatch safe-swatch" aria-hidden="true"></i>Safe or usable frame</span>
+        </div>
+        <div id="cross-format-controls" class="cross-format-controls"></div>
+      </section>
     </section>
 
     <section id="guidance-panel" class="guidance-panel" aria-labelledby="guidance-heading" hidden>
@@ -88,7 +107,7 @@
   </main>
 
   <footer>
-    <p>Platform UI can vary by device, caption length, placement and ad format. For paid placements, confirm the final creative in the platform preview.</p>
+    <p>Cross-format overlays use a centered crop. Platform UI can vary by device, caption length, placement and ad format, so confirm paid creative in the platform preview.</p>
   </footer>
 
   <script src="app.js"></script>

@@ -91,7 +91,7 @@ const PRESETS = [
   {
     id: "instagram-feed-4x5",
     group: "portrait",
-    label: "Instagram In-Feed 4:5",
+    label: "Instagram / Facebook In-Feed 4:5",
     ratio: 4 / 5,
     frame: [1080, 1350],
     fullFrame: true,
@@ -100,6 +100,99 @@ const PRESETS = [
     note: "Instagram publishes the supported 4:5 in-feed frame, but does not publish an in-image UI safe-zone margin for this placement. The complete 1080 × 1350 frame is shown as usable rather than inventing an unofficial inset.",
     source: SOURCES.instagramFeed,
     sourceLabel: "Instagram Help Center · photo width and aspect ratios"
+  }
+];
+
+const CROP_PRESETS = [
+  {
+    id: "crop-tiktok-9x16",
+    kind: "crop",
+    label: "TikTok 9:16 crop + safe zone",
+    detail: "TikTok In-Feed",
+    ratio: 9 / 16,
+    targetFrame: [1080, 1920],
+    margins: { top: 240, right: 300, bottom: 660, left: 120 },
+    color: "#00f2ea",
+    guidanceStatus: "Crop + official safe zone",
+    note: "Dark gray is cropped out; the teal tint is TikTok's interface-exclusion area inside the centered 9:16 frame; the clear outlined region is safe.",
+    source: SOURCES.tiktok,
+    sourceLabel: "TikTok Ads in-feed specification · updated June 2026"
+  },
+  {
+    id: "crop-reels-9x16",
+    kind: "crop",
+    label: "Reels 9:16 crop + safe zone",
+    detail: "Instagram / Facebook Reels",
+    ratio: 9 / 16,
+    targetFrame: [1080, 1920],
+    margins: { top: 269, right: 65, bottom: 672, left: 65 },
+    color: "#ff4f9a",
+    guidanceStatus: "Crop + official safe zone",
+    note: "Dark gray is cropped out; the pink tint is the Reels interface-exclusion area inside the centered 9:16 frame; the clear outlined region is safe.",
+    source: SOURCES.metaReels,
+    sourceLabel: "Meta Reels guidance and official safe-zone checker"
+  },
+  {
+    id: "crop-stories-9x16",
+    kind: "crop",
+    label: "Stories 9:16 crop + safe zone",
+    detail: "Instagram Stories",
+    ratio: 9 / 16,
+    targetFrame: [1080, 1920],
+    margins: { top: 269, right: 65, bottom: 384, left: 65 },
+    color: "#ffb13b",
+    guidanceStatus: "Crop + official safe zone",
+    note: "Dark gray is cropped out; the amber tint is the Stories interface-exclusion area inside the centered 9:16 frame; the clear outlined region is safe.",
+    source: SOURCES.metaStories,
+    sourceLabel: "Meta Ads Guide · Instagram Stories"
+  },
+  {
+    id: "crop-youtube-9x16",
+    kind: "crop",
+    label: "YouTube 9:16 crop + safe zone",
+    detail: "Shorts / vertical ads",
+    ratio: 9 / 16,
+    targetFrame: [1080, 1920],
+    margins: { top: 288, right: 192, bottom: 672, left: 48 },
+    color: "#ff3838",
+    guidanceStatus: "Crop + official safe zone",
+    note: "Dark gray is cropped out; the red tint is Google's interface-exclusion area inside the centered 9:16 frame; the clear outlined region is safe.",
+    source: SOURCES.youtube,
+    sourceLabel: "Google Ads vertical-video safe zones"
+  },
+  {
+    id: "crop-feed-4x5",
+    kind: "crop",
+    label: "IG / FB In-Feed 4:5 crop",
+    detail: "Instagram / Facebook Feed",
+    ratio: 4 / 5,
+    color: "#bf77ff",
+    guidanceStatus: "Cross-format preview",
+    note: "Dark gray is cropped out. The remaining clear 4:5 window is the full usable feed frame because Meta does not publish an additional in-image UI exclusion for this placement.",
+    source: SOURCES.instagramFeed,
+    sourceLabel: "Instagram Help Center · photo width and aspect ratios"
+  },
+  {
+    id: "crop-square-1x1",
+    kind: "crop",
+    label: "Square 1:1 crop",
+    detail: "Instagram / Facebook Feed",
+    ratio: 1,
+    color: "#f2c94c",
+    guidanceStatus: "Cross-format preview",
+    note: "Dark gray is cropped out. The remaining clear square is the centered output frame; no platform-specific UI exclusion is applied.",
+    sourceLabel: "Calculated centered crop preview"
+  },
+  {
+    id: "crop-landscape-16x9",
+    kind: "crop",
+    label: "Landscape 16:9 crop",
+    detail: "YouTube / landscape video",
+    ratio: 16 / 9,
+    color: "#4e9bff",
+    guidanceStatus: "Cross-format preview",
+    note: "Dark gray is cropped out. The remaining clear 16:9 window is the centered landscape output frame; no platform-specific UI exclusion is applied.",
+    sourceLabel: "Calculated centered crop preview"
   }
 ];
 
@@ -117,6 +210,8 @@ const elements = {
   assetMeta: document.getElementById("asset-meta"),
   placementGroups: document.getElementById("placement-groups"),
   placementStatus: document.getElementById("placement-status"),
+  crossFormatControls: document.getElementById("cross-format-controls"),
+  crossFormatStatus: document.getElementById("cross-format-status"),
   guidancePanel: document.getElementById("guidance-panel"),
   guidanceList: document.getElementById("guidance-list"),
   clearBtn: document.getElementById("clear-btn"),
@@ -127,8 +222,10 @@ let activeObjectUrl = null;
 let currentAsset = null;
 const activePresets = new Set();
 const presetButtons = new Map();
+const cropButtons = new Map();
 
 buildPlacementControls();
+buildCropControls();
 updatePlacementAvailability();
 
 elements.dropZone.addEventListener("click", () => elements.fileInput.click());
@@ -198,6 +295,20 @@ function buildPlacementControls() {
   });
 }
 
+function buildCropControls() {
+  CROP_PRESETS.forEach((preset) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "overlay-btn crop-btn";
+    button.dataset.preset = preset.id;
+    button.innerHTML = `<span>${preset.label}<small>${preset.detail}</small></span>`;
+    button.setAttribute("aria-pressed", "false");
+    button.addEventListener("click", () => toggleOverlay(preset.id));
+    cropButtons.set(preset.id, button);
+    elements.crossFormatControls.appendChild(button);
+  });
+}
+
 function handleFile(file) {
   if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
     setStatus("Choose an image or video file.", true);
@@ -254,8 +365,13 @@ function updatePlacementAvailability() {
     presetButtons.get(preset.id).disabled = !currentAsset || !ratiosMatch(currentAsset.ratio, preset.ratio);
   });
 
+  CROP_PRESETS.forEach((preset) => {
+    cropButtons.get(preset.id).disabled = !currentAsset || ratiosMatch(currentAsset.ratio, preset.ratio);
+  });
+
   if (!currentAsset) {
     setStatus("Upload a creative to activate matching placements.");
+    elements.crossFormatStatus.textContent = "Upload a creative to preview alternate aspect ratios.";
     return;
   }
 
@@ -266,6 +382,9 @@ function updatePlacementAvailability() {
   } else {
     setStatus(`This ${currentAsset.width}:${currentAsset.height} aspect ratio does not match the 16:9, 9:16 or 4:5 guides.`, true);
   }
+
+  const alternateCount = CROP_PRESETS.filter((preset) => !ratiosMatch(currentAsset.ratio, preset.ratio)).length;
+  elements.crossFormatStatus.textContent = `${alternateCount} alternate centered crop${alternateCount === 1 ? "" : "s"} available for this asset.`;
 }
 
 function ratiosMatch(actual, expected) {
@@ -279,8 +398,10 @@ function setStatus(message, warning = false) {
 
 function toggleOverlay(presetId) {
   if (!currentAsset) return;
-  const preset = PRESETS.find((candidate) => candidate.id === presetId);
-  if (!preset || !ratiosMatch(currentAsset.ratio, preset.ratio)) return;
+  const preset = [...PRESETS, ...CROP_PRESETS].find((candidate) => candidate.id === presetId);
+  if (!preset) return;
+  if (preset.kind === "crop" && ratiosMatch(currentAsset.ratio, preset.ratio)) return;
+  if (preset.kind !== "crop" && !ratiosMatch(currentAsset.ratio, preset.ratio)) return;
 
   if (activePresets.has(presetId)) {
     removeOverlay(presetId);
@@ -292,7 +413,9 @@ function toggleOverlay(presetId) {
 
 function addOverlay(preset) {
   let layer;
-  if (preset.image) {
+  if (preset.kind === "crop") {
+    layer = createCropCanvas(preset);
+  } else if (preset.image) {
     layer = document.createElement("img");
     layer.src = preset.image;
     layer.alt = "";
@@ -317,9 +440,9 @@ function clearOverlays() {
 }
 
 function updateOverlayUi() {
-  PRESETS.forEach((preset) => {
+  [...PRESETS, ...CROP_PRESETS].forEach((preset) => {
     const isActive = activePresets.has(preset.id);
-    const button = presetButtons.get(preset.id);
+    const button = presetButtons.get(preset.id) || cropButtons.get(preset.id);
     button.classList.toggle("active", isActive);
     button.setAttribute("aria-pressed", String(isActive));
   });
@@ -332,7 +455,7 @@ function updateOverlayUi() {
 
 function renderGuidance() {
   elements.guidanceList.replaceChildren();
-  PRESETS.filter((preset) => activePresets.has(preset.id)).forEach((preset) => {
+  [...PRESETS, ...CROP_PRESETS].filter((preset) => activePresets.has(preset.id)).forEach((preset) => {
     const card = document.createElement("article");
     card.className = "guidance-card";
 
@@ -343,10 +466,19 @@ function renderGuidance() {
     card.appendChild(badge);
 
     const title = document.createElement("h3");
-    title.textContent = `${preset.label} · ${preset.frame[0]} × ${preset.frame[1]}`;
+    title.textContent = preset.kind === "crop"
+      ? `${preset.label} · alternate crop`
+      : `${preset.label} · ${preset.frame[0]} × ${preset.frame[1]}`;
     card.appendChild(title);
 
-    if (preset.margins) {
+    if (preset.kind === "crop") {
+      const crop = getCropRect(currentAsset.width, currentAsset.height, preset.ratio);
+      const measurements = document.createElement("p");
+      measurements.className = "measurements";
+      const safe = preset.margins ? getSafeRectInCrop(crop, preset) : null;
+      measurements.textContent = `Centered crop window: ${Math.round(crop.width)} × ${Math.round(crop.height)} px · ${describeCrop(crop, currentAsset.width, currentAsset.height)}${safe ? ` · safe area ${Math.round(safe.width)} × ${Math.round(safe.height)} px` : ""}`;
+      card.appendChild(measurements);
+    } else if (preset.margins) {
       const measurements = document.createElement("p");
       measurements.className = "measurements";
       measurements.textContent = `Clearance: ${preset.margins.top}px T · ${preset.margins.right}px R · ${preset.margins.bottom}px B · ${preset.margins.left}px L`;
@@ -377,6 +509,129 @@ function renderGuidance() {
 
     elements.guidanceList.appendChild(card);
   });
+}
+
+function createCropCanvas(preset) {
+  const { width, height } = currentAsset;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  const crop = getCropRect(width, height, preset.ratio);
+
+  context.fillStyle = "rgba(6, 7, 10, 0.78)";
+  if (crop.y > 0) {
+    context.fillRect(0, 0, width, crop.y);
+    context.fillRect(0, crop.y + crop.height, width, height - crop.y - crop.height);
+  }
+  if (crop.x > 0) {
+    context.fillRect(0, 0, crop.x, height);
+    context.fillRect(crop.x + crop.width, 0, width - crop.x - crop.width, height);
+  }
+
+  context.save();
+  context.strokeStyle = preset.color;
+  context.lineWidth = Math.max(4, Math.round(Math.min(width, height) * 0.004));
+  context.strokeRect(crop.x + context.lineWidth / 2, crop.y + context.lineWidth / 2, crop.width - context.lineWidth, crop.height - context.lineWidth);
+  context.restore();
+
+  drawCropExclusionLabels(context, crop, width, height);
+
+  if (preset.margins) {
+    const safe = drawSafeZoneInCrop(context, crop, preset);
+    drawLabel(context, "SAFE AREA", safe.x + safe.width / 2, safe.y + safe.height / 2, {
+      align: "center",
+      size: Math.max(25, Math.round(Math.min(width, height) * 0.03)),
+      color: "#ffffff"
+    });
+    drawLabel(context, `${Math.round(safe.width)} × ${Math.round(safe.height)} px`, safe.x + safe.width / 2, safe.y + safe.height / 2 + Math.max(36, Math.round(height * 0.02)), {
+      align: "center",
+      size: Math.max(18, Math.round(Math.min(width, height) * 0.021)),
+      color: "rgba(255,255,255,0.86)"
+    });
+  } else {
+    drawLabel(context, `${formatRatio(preset.ratio)} CLEAR FRAME`, crop.x + crop.width / 2, crop.y + crop.height / 2, {
+      align: "center",
+      size: Math.max(28, Math.round(Math.min(width, height) * 0.032)),
+      color: "#ffffff"
+    });
+    drawLabel(context, `${Math.round(crop.width)} × ${Math.round(crop.height)} px`, crop.x + crop.width / 2, crop.y + crop.height / 2 + Math.max(40, Math.round(height * 0.022)), {
+      align: "center",
+      size: Math.max(20, Math.round(Math.min(width, height) * 0.022)),
+      color: "rgba(255,255,255,0.86)"
+    });
+  }
+  drawPill(context, preset.label.toUpperCase(), 26, 26, preset.color);
+  return canvas;
+}
+
+function drawSafeZoneInCrop(context, crop, preset) {
+  const safe = getSafeRectInCrop(crop, preset);
+  const top = safe.y - crop.y;
+  const bottom = crop.y + crop.height - safe.y - safe.height;
+  const left = safe.x - crop.x;
+  const right = crop.x + crop.width - safe.x - safe.width;
+
+  context.fillStyle = hexToRgba(preset.color, 0.46);
+  if (top) context.fillRect(crop.x, crop.y, crop.width, top);
+  if (bottom) context.fillRect(crop.x, crop.y + crop.height - bottom, crop.width, bottom);
+  if (left) context.fillRect(crop.x, safe.y, left, safe.height);
+  if (right) context.fillRect(crop.x + crop.width - right, safe.y, right, safe.height);
+
+  context.save();
+  context.strokeStyle = "rgba(255,255,255,0.96)";
+  context.lineWidth = Math.max(4, Math.round(Math.min(crop.width, crop.height) * 0.004));
+  context.strokeRect(safe.x + context.lineWidth / 2, safe.y + context.lineWidth / 2, safe.width - context.lineWidth, safe.height - context.lineWidth);
+  context.restore();
+  return safe;
+}
+
+function getSafeRectInCrop(crop, preset) {
+  const [frameWidth, frameHeight] = preset.targetFrame;
+  const scaleX = crop.width / frameWidth;
+  const scaleY = crop.height / frameHeight;
+  return {
+    x: crop.x + preset.margins.left * scaleX,
+    y: crop.y + preset.margins.top * scaleY,
+    width: crop.width - (preset.margins.left + preset.margins.right) * scaleX,
+    height: crop.height - (preset.margins.top + preset.margins.bottom) * scaleY
+  };
+}
+
+function drawCropExclusionLabels(context, crop, width, height) {
+  const size = Math.max(16, Math.round(Math.min(width, height) * 0.018));
+  if (crop.y > size * 2.5) {
+    drawLabel(context, "CROPPED OUT", width / 2, crop.y / 2, { align: "center", size, color: "rgba(255,255,255,0.7)" });
+    drawLabel(context, "CROPPED OUT", width / 2, crop.y + crop.height + (height - crop.y - crop.height) / 2, { align: "center", size, color: "rgba(255,255,255,0.7)" });
+  }
+  if (crop.x > size * 2.5) {
+    drawLabel(context, "CROP", crop.x / 2, height / 2, { align: "center", size, color: "rgba(255,255,255,0.7)" });
+    drawLabel(context, "CROP", crop.x + crop.width + (width - crop.x - crop.width) / 2, height / 2, { align: "center", size, color: "rgba(255,255,255,0.7)" });
+  }
+}
+
+function getCropRect(width, height, targetRatio) {
+  const sourceRatio = width / height;
+  if (sourceRatio > targetRatio) {
+    const cropWidth = height * targetRatio;
+    return { x: (width - cropWidth) / 2, y: 0, width: cropWidth, height };
+  }
+  const cropHeight = width / targetRatio;
+  return { x: 0, y: (height - cropHeight) / 2, width, height: cropHeight };
+}
+
+function describeCrop(crop, width, height) {
+  if (crop.y > 0.5) return `removes ${Math.round(crop.y)} px from top and bottom`;
+  if (crop.x > 0.5) return `removes ${Math.round(crop.x)} px from left and right`;
+  return `uses the full ${width} × ${height} frame`;
+}
+
+function formatRatio(ratio) {
+  const match = CROP_PRESETS.find((preset) => preset.ratio === ratio);
+  if (match?.id.includes("9x16")) return "9:16";
+  if (match?.id.includes("4x5")) return "4:5";
+  if (match?.id.includes("1x1")) return "1:1";
+  return "16:9";
 }
 
 function createGuideCanvas(preset) {

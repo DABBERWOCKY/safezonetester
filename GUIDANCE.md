@@ -16,6 +16,12 @@ First-party sources last checked October 8, 2026.
 
 The original landscape YouTube / Performance Max and Broadcast HD image overlays remain available for continuity. They are labeled as existing or reference overlays in the interface rather than as newly verified first-party guidance.
 
+## Cross-format review
+
+Cross-format overlays calculate a centered crop from the uploaded asset without resizing or altering it. Dark gray marks content removed by the target aspect ratio, a platform-colored tint marks a published UI/interface exclusion inside the target frame, and a clear white-outlined region marks the usable safe area.
+
+The Instagram / Facebook 4:5 feed preview has no additional colored UI exclusion because no first-party in-image exclusion is published for that placement. On a 1080 x 1920 source, its centered 1080 x 1350 crop removes 285 px from the top and 285 px from the bottom.
+
 ## Maintenance
 
 Platform interfaces can vary by device, caption length, placement, and ad format. Re-check these first-party pages and any linked downloadable templates before changing the pixel values.

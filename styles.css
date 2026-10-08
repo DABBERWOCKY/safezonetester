@@ -286,6 +286,66 @@ footer {
   font-size: 0.75rem;
 }
 
+.cross-format-review {
+  margin-top: 26px;
+  padding-top: 26px;
+  border-top: 1px solid var(--line);
+}
+
+.cross-format-heading-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 10px;
+}
+
+.cross-format-heading-row h3 { margin-bottom: 0; }
+
+.cross-format-heading-row > p {
+  max-width: 420px;
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+.cross-format-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.overlay-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: -8px 0 16px;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.overlay-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 20px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.cropped-swatch { background: rgba(6, 7, 10, 0.88); }
+.exclusion-swatch { background: rgba(255, 79, 154, 0.58); }
+
+.safe-swatch {
+  border: 2px solid #fff;
+  background: transparent;
+}
+
 .placement-button-list {
   display: grid;
   gap: 8px;
@@ -312,6 +372,14 @@ footer {
   border: 1px solid #7b7b87;
   border-radius: 50%;
   content: "";
+}
+
+.crop-btn small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 500;
 }
 
 .overlay-btn:hover:not(:disabled) { border-color: #686874; }
@@ -461,6 +529,7 @@ footer {
   .privacy-note { margin-top: 22px; }
   .placement-groups { grid-template-columns: 1fr; }
   .guidance-list { grid-template-columns: 1fr; }
+  .cross-format-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 560px) {
@@ -472,12 +541,15 @@ footer {
   h1 { font-size: clamp(2.8rem, 17vw, 4.2rem); }
 
   .section-heading,
+  .cross-format-heading-row,
   .action-bar {
     align-items: flex-start;
     flex-direction: column;
   }
 
   .asset-meta { text-align: left; }
+  .cross-format-heading-row > p { text-align: left; }
+  .cross-format-controls { grid-template-columns: 1fr; }
   .drop-zone { min-height: 190px; }
   .action-bar .primary-button { width: 100%; }
 }
