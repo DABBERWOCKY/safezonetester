@@ -478,6 +478,7 @@ footer {
 .context-toolbar input { accent-color: var(--accent); }
 
 .device-shell {
+  position: relative;
   width: min(420px, 100%);
   margin-inline: auto;
   overflow: hidden;
@@ -487,11 +488,36 @@ footer {
   box-shadow: 0 22px 60px rgba(0, 0, 0, 0.42);
 }
 
+.canvas-play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(5, 5, 8, 0.72);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.42);
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  backdrop-filter: blur(7px);
+}
+
+.canvas-play-button:hover { background: rgba(5, 5, 8, 0.9); }
+
 #platform-preview-canvas {
   display: block;
   width: 100%;
   height: auto;
   background: #09090b;
+}
+
+.context-video-controls {
+  width: min(420px, 100%);
+  margin-top: 12px;
 }
 
 .context-preview-notes {

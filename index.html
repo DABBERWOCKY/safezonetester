@@ -41,7 +41,7 @@
       <div id="preview-wrap" class="preview-wrap" hidden>
         <div id="preview-container" class="preview-container">
           <img id="preview-image" class="preview-media" alt="Uploaded creative preview" hidden>
-          <video id="preview-video" class="preview-media" playsinline hidden></video>
+          <video id="preview-video" class="preview-media" playsinline loop hidden></video>
           <div id="overlay-container" aria-hidden="true"></div>
         </div>
 
@@ -108,6 +108,16 @@
           </div>
           <div class="device-shell">
             <canvas id="platform-preview-canvas" width="1080" height="2160" aria-label="Simulated on-platform preview"></canvas>
+            <button id="context-canvas-play-btn" class="canvas-play-button" type="button" aria-label="Play video" hidden>
+              <span aria-hidden="true">▶</span>
+            </button>
+          </div>
+          <div id="context-video-controls" class="video-controls context-video-controls" hidden>
+            <button id="context-play-pause-btn" class="icon-button" type="button" aria-label="Play video">
+              <span aria-hidden="true">▶</span>
+            </button>
+            <input id="context-seek-bar" type="range" min="0" max="100" value="0" aria-label="On-platform video position">
+            <span id="context-time-display">0:00 / 0:00</span>
           </div>
           <div class="context-preview-notes">
             <p id="context-preview-note"></p>

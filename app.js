@@ -233,7 +233,12 @@ const elements = {
   contextGuideToggle: document.getElementById("context-guide-toggle"),
   contextPreviewLabel: document.getElementById("context-preview-label"),
   contextPreviewNote: document.getElementById("context-preview-note"),
-  exportContextBtn: document.getElementById("export-context-btn")
+  exportContextBtn: document.getElementById("export-context-btn"),
+  contextVideoControls: document.getElementById("context-video-controls"),
+  contextPlayPauseBtn: document.getElementById("context-play-pause-btn"),
+  contextCanvasPlayBtn: document.getElementById("context-canvas-play-btn"),
+  contextSeekBar: document.getElementById("context-seek-bar"),
+  contextTimeDisplay: document.getElementById("context-time-display")
 };
 
 let activeObjectUrl = null;
@@ -288,6 +293,17 @@ elements.clearBtn.addEventListener("click", clearOverlays);
 elements.exportBtn.addEventListener("click", exportScreenshot);
 elements.contextGuideToggle.addEventListener("change", renderPlatformPreview);
 elements.exportContextBtn.addEventListener("click", exportPlatformPreview);
+elements.contextPlayPauseBtn.addEventListener("click", togglePlayPause);
+elements.contextCanvasPlayBtn.addEventListener("click", togglePlayPause);
+elements.platformPreviewCanvas.addEventListener("click", () => {
+  if (currentAsset?.type === "Video") togglePlayPause();
+});
+elements.contextSeekBar.addEventListener("input", () => {
+  if (Number.isFinite(elements.previewVideo.duration)) {
+    elements.previewVideo.currentTime = (Number(elements.contextSeekBar.value) / 100) * elements.previewVideo.duration;
+    renderPlatformPreview();
+  }
+});
 
 window.addEventListener("beforeunload", () => {
   if (activeObjectUrl) URL.revokeObjectURL(activeObjectUrl);
@@ -368,6 +384,8 @@ function handleFile(file) {
     elements.previewVideo.removeAttribute("src");
     elements.previewVideo.hidden = true;
     elements.customControls.hidden = true;
+    elements.contextVideoControls.hidden = true;
+    elements.contextCanvasPlayBtn.hidden = true;
     elements.previewImage.hidden = false;
     elements.previewImage.src = activeObjectUrl;
     elements.previewImage.onload = () => {
@@ -383,6 +401,8 @@ function handleFile(file) {
       elements.previewVideo.pause();
       elements.previewVideo.currentTime = 0;
       elements.customControls.hidden = false;
+      elements.contextVideoControls.hidden = false;
+      elements.contextCanvasPlayBtn.hidden = false;
       updatePlayButton();
       updateTimeDisplay();
       setAsset(file, elements.previewVideo.videoWidth, elements.previewVideo.videoHeight, "Video");
@@ -1109,6 +1129,10 @@ function updatePlayButton() {
   const isPaused = elements.previewVideo.paused;
   elements.playPauseBtn.innerHTML = `<span aria-hidden="true">${isPaused ? "▶" : "Ⅱ"}</span>`;
   elements.playPauseBtn.setAttribute("aria-label", isPaused ? "Play video" : "Pause video");
+  elements.contextPlayPauseBtn.innerHTML = `<span aria-hidden="true">${isPaused ? "▶" : "Ⅱ"}</span>`;
+  elements.contextPlayPauseBtn.setAttribute("aria-label", isPaused ? "Play video" : "Pause video");
+  elements.contextCanvasPlayBtn.hidden = !isPaused || currentAsset?.type !== "Video";
+  elements.contextCanvasPlayBtn.innerHTML = `<span aria-hidden="true">▶</span>`;
 }
 
 function updateTimeDisplay() {
@@ -1116,6 +1140,8 @@ function updateTimeDisplay() {
   const current = elements.previewVideo.currentTime || 0;
   elements.timeDisplay.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
   elements.seekBar.value = duration ? (current / duration) * 100 : 0;
+  elements.contextTimeDisplay.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+  elements.contextSeekBar.value = duration ? (current / duration) * 100 : 0;
 }
 
 function formatTime(seconds) {
