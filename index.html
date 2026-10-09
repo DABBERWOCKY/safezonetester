@@ -89,10 +89,38 @@
       </section>
     </section>
 
+    <section id="platform-preview-panel" class="platform-preview-panel" aria-labelledby="platform-preview-heading" hidden>
+      <div class="section-heading platform-preview-heading-row">
+        <div>
+          <p class="step-label">03 / Context</p>
+          <h2 id="platform-preview-heading">See it on-platform</h2>
+        </div>
+        <p>Representative placement UI · one preview at a time</p>
+      </div>
+
+      <p class="placement-status">These mockups show the centered crop and typical interface together. Exact controls can vary by device, account, caption length and campaign setup.</p>
+      <div class="platform-preview-layout">
+        <div id="platform-preview-controls" class="platform-preview-controls" role="list" aria-label="Platform preview choices"></div>
+        <div class="device-preview-column">
+          <div class="context-toolbar">
+            <span id="context-preview-label">Simulated placement</span>
+            <label><input id="context-guide-toggle" type="checkbox"> Show safe area</label>
+          </div>
+          <div class="device-shell">
+            <canvas id="platform-preview-canvas" width="1080" height="2160" aria-label="Simulated on-platform preview"></canvas>
+          </div>
+          <div class="context-preview-notes">
+            <p id="context-preview-note"></p>
+            <button id="export-context-btn" class="text-button" type="button">Export this preview</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="guidance-panel" class="guidance-panel" aria-labelledby="guidance-heading" hidden>
       <div class="section-heading guidance-heading-row">
         <div>
-          <p class="step-label">03 / Guidance</p>
+          <p class="step-label">04 / Guidance</p>
           <h2 id="guidance-heading">Selected overlay details</h2>
         </div>
         <p>First-party sources checked October 8, 2026</p>

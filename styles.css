@@ -103,9 +103,11 @@ h1 {
 
 .workspace,
 .placements,
+.platform-preview-panel,
 .guidance-panel { padding: clamp(24px, 4vw, 48px); }
 
 .placements,
+.platform-preview-panel,
 .guidance-panel { border-top: 1px solid var(--line); }
 
 .section-heading {
@@ -124,6 +126,7 @@ h2 {
 
 .asset-meta,
 .guidance-heading-row > p,
+.platform-preview-heading-row > p,
 .placement-status,
 .action-bar > p,
 footer {
@@ -422,6 +425,87 @@ footer {
   gap: 12px;
 }
 
+.platform-preview-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(320px, 1.2fr);
+  gap: clamp(22px, 4vw, 48px);
+  align-items: start;
+}
+
+.platform-preview-controls {
+  display: grid;
+  gap: 8px;
+}
+
+.platform-preview-controls .overlay-btn small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+
+.device-preview-column {
+  min-width: 0;
+}
+
+.context-toolbar,
+.context-preview-notes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  width: min(420px, 100%);
+  margin-inline: auto;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.context-toolbar { margin-bottom: 10px; }
+
+.context-toolbar > span {
+  color: var(--text);
+  font-weight: 750;
+}
+
+.context-toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+}
+
+.context-toolbar input { accent-color: var(--accent); }
+
+.device-shell {
+  width: min(420px, 100%);
+  margin-inline: auto;
+  overflow: hidden;
+  border: 8px solid #050506;
+  border-radius: 34px;
+  background: #050506;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.42);
+}
+
+#platform-preview-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #09090b;
+}
+
+.context-preview-notes {
+  align-items: flex-start;
+  margin-top: 12px;
+}
+
+.context-preview-notes p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.context-preview-notes button { flex: 0 0 auto; }
+
 .guidance-card {
   padding: 18px;
   border: 1px solid var(--line);
@@ -528,6 +612,8 @@ footer {
 
   .privacy-note { margin-top: 22px; }
   .placement-groups { grid-template-columns: 1fr; }
+  .platform-preview-layout { grid-template-columns: 1fr; }
+  .platform-preview-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .guidance-list { grid-template-columns: 1fr; }
   .cross-format-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -550,6 +636,7 @@ footer {
   .asset-meta { text-align: left; }
   .cross-format-heading-row > p { text-align: left; }
   .cross-format-controls { grid-template-columns: 1fr; }
+  .platform-preview-controls { grid-template-columns: 1fr; }
   .drop-zone { min-height: 190px; }
   .action-bar .primary-button { width: 100%; }
 }

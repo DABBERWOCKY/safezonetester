@@ -196,6 +196,17 @@ const CROP_PRESETS = [
   }
 ];
 
+const PLATFORM_PREVIEWS = [
+  { id: "context-tiktok", label: "TikTok In-Feed", detail: "For You feed · 9:16", platform: "tiktok", ratio: 9 / 16, guide: "crop-tiktok-9x16", note: "Typical For You feed controls, caption stack and CTA. TikTok notes that captions and interactive add-ons can reduce the safe area." },
+  { id: "context-instagram-reels", label: "Instagram Reels", detail: "Reels ad · 9:16", platform: "instagram-reels", ratio: 9 / 16, guide: "crop-reels-9x16", note: "Representative Instagram Reels UI with the action rail, identity, caption and sponsored CTA treatment." },
+  { id: "context-facebook-reels", label: "Facebook Reels", detail: "Reels ad · 9:16", platform: "facebook-reels", ratio: 9 / 16, guide: "crop-reels-9x16", note: "Representative Facebook Reels UI. Meta combines Facebook and Instagram in its Reels safe-zone guidance, but their surrounding chrome differs." },
+  { id: "context-instagram-stories", label: "Instagram Stories", detail: "Story ad · 9:16", platform: "stories", ratio: 9 / 16, guide: "crop-stories-9x16", note: "Typical Story progress, account header, overflow control and bottom CTA treatment." },
+  { id: "context-youtube-shorts", label: "YouTube Shorts", detail: "Shorts ad · 9:16", platform: "shorts", ratio: 9 / 16, guide: "crop-youtube-9x16", note: "Representative Shorts action rail, channel/caption stack and mobile CTA card. Google notes that overlays differ by campaign and screen." },
+  { id: "context-instagram-feed", label: "Instagram Feed", detail: "Portrait post · 4:5", platform: "instagram-feed", ratio: 4 / 5, guide: "crop-feed-4x5", note: "The full 4:5 image is visible. Identity and actions sit outside the media frame, which is why no extra in-image safe inset is shown." },
+  { id: "context-facebook-feed", label: "Facebook Feed", detail: "Portrait post · 4:5", platform: "facebook-feed", ratio: 4 / 5, guide: "crop-feed-4x5", note: "A representative Facebook feed post with the 4:5 media framed by post header and engagement controls." },
+  { id: "context-youtube-watch", label: "YouTube Video", detail: "Watch page · 16:9", platform: "youtube-watch", ratio: 16 / 9, guide: null, note: "Representative mobile YouTube watch context. Actual ad controls and CTAs depend on campaign type and device." }
+];
+
 const elements = {
   fileInput: document.getElementById("file-input"),
   dropZone: document.getElementById("drop-zone"),
@@ -215,7 +226,14 @@ const elements = {
   guidancePanel: document.getElementById("guidance-panel"),
   guidanceList: document.getElementById("guidance-list"),
   clearBtn: document.getElementById("clear-btn"),
-  exportBtn: document.getElementById("export-btn")
+  exportBtn: document.getElementById("export-btn"),
+  platformPreviewPanel: document.getElementById("platform-preview-panel"),
+  platformPreviewControls: document.getElementById("platform-preview-controls"),
+  platformPreviewCanvas: document.getElementById("platform-preview-canvas"),
+  contextGuideToggle: document.getElementById("context-guide-toggle"),
+  contextPreviewLabel: document.getElementById("context-preview-label"),
+  contextPreviewNote: document.getElementById("context-preview-note"),
+  exportContextBtn: document.getElementById("export-context-btn")
 };
 
 let activeObjectUrl = null;
@@ -223,9 +241,13 @@ let currentAsset = null;
 const activePresets = new Set();
 const presetButtons = new Map();
 const cropButtons = new Map();
+const contextButtons = new Map();
+let activeContextId = PLATFORM_PREVIEWS[0].id;
+let contextAnimationFrame = null;
 
 buildPlacementControls();
 buildCropControls();
+buildPlatformPreviewControls();
 updatePlacementAvailability();
 
 elements.dropZone.addEventListener("click", () => elements.fileInput.click());
@@ -264,9 +286,12 @@ elements.seekBar.addEventListener("input", () => {
 
 elements.clearBtn.addEventListener("click", clearOverlays);
 elements.exportBtn.addEventListener("click", exportScreenshot);
+elements.contextGuideToggle.addEventListener("change", renderPlatformPreview);
+elements.exportContextBtn.addEventListener("click", exportPlatformPreview);
 
 window.addEventListener("beforeunload", () => {
   if (activeObjectUrl) URL.revokeObjectURL(activeObjectUrl);
+  if (contextAnimationFrame) cancelAnimationFrame(contextAnimationFrame);
 });
 
 function buildPlacementControls() {
@@ -309,6 +334,20 @@ function buildCropControls() {
   });
 }
 
+function buildPlatformPreviewControls() {
+  PLATFORM_PREVIEWS.forEach((preview) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "overlay-btn";
+    button.innerHTML = `<span>${preview.label}<small>${preview.detail}</small></span>`;
+    button.setAttribute("aria-pressed", String(preview.id === activeContextId));
+    button.classList.toggle("active", preview.id === activeContextId);
+    button.addEventListener("click", () => selectPlatformPreview(preview.id));
+    contextButtons.set(preview.id, button);
+    elements.platformPreviewControls.appendChild(button);
+  });
+}
+
 function handleFile(file) {
   if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
     setStatus("Choose an image or video file.", true);
@@ -317,6 +356,7 @@ function handleFile(file) {
 
   clearOverlays();
   currentAsset = null;
+  elements.platformPreviewPanel.hidden = true;
   elements.exportBtn.disabled = true;
   updatePlacementAvailability();
 
@@ -358,6 +398,28 @@ function setAsset(file, width, height, type) {
   elements.dropZone.querySelector(".drop-title").textContent = file.name;
   elements.dropZone.querySelector(".drop-subtitle").textContent = "Click or drop another file to replace it";
   updatePlacementAvailability();
+  elements.platformPreviewPanel.hidden = false;
+  startContextRenderer();
+}
+
+function selectPlatformPreview(previewId) {
+  activeContextId = previewId;
+  contextButtons.forEach((button, id) => {
+    const active = id === previewId;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  renderPlatformPreview();
+}
+
+function startContextRenderer() {
+  if (contextAnimationFrame) cancelAnimationFrame(contextAnimationFrame);
+  const tick = () => {
+    if (currentAsset?.type === "Video" && !elements.previewVideo.paused) renderPlatformPreview();
+    contextAnimationFrame = requestAnimationFrame(tick);
+  };
+  renderPlatformPreview();
+  contextAnimationFrame = requestAnimationFrame(tick);
 }
 
 function updatePlacementAvailability() {
@@ -632,6 +694,306 @@ function formatRatio(ratio) {
   if (match?.id.includes("4x5")) return "4:5";
   if (match?.id.includes("1x1")) return "1:1";
   return "16:9";
+}
+
+function renderPlatformPreview() {
+  if (!currentAsset) return;
+  const preview = PLATFORM_PREVIEWS.find((candidate) => candidate.id === activeContextId);
+  if (!preview) return;
+
+  const canvas = elements.platformPreviewCanvas;
+  const context = canvas.getContext("2d");
+  canvas.width = 1080;
+  canvas.height = 1920;
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "#08080a";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const media = currentAsset.type === "Video" ? elements.previewVideo : elements.previewImage;
+  let mediaRect = { x: 0, y: 0, width: 1080, height: 1920 };
+
+  if (preview.platform === "instagram-feed") {
+    mediaRect = drawInstagramFeedPreview(context, media);
+  } else if (preview.platform === "facebook-feed") {
+    mediaRect = drawFacebookFeedPreview(context, media);
+  } else if (preview.platform === "youtube-watch") {
+    mediaRect = drawYouTubeWatchPreview(context, media);
+  } else {
+    drawMediaCover(context, media, mediaRect);
+    drawFullscreenPlatformUi(context, preview.platform);
+  }
+
+  if (elements.contextGuideToggle.checked) drawContextGuide(context, mediaRect, preview);
+
+  elements.contextPreviewLabel.textContent = `${preview.label} · simulated placement`;
+  elements.contextPreviewNote.textContent = preview.note;
+}
+
+function drawMediaCover(context, media, rect) {
+  const sourceWidth = currentAsset.width;
+  const sourceHeight = currentAsset.height;
+  const sourceRatio = sourceWidth / sourceHeight;
+  const targetRatio = rect.width / rect.height;
+  let sx = 0;
+  let sy = 0;
+  let sw = sourceWidth;
+  let sh = sourceHeight;
+  if (sourceRatio > targetRatio) {
+    sw = sourceHeight * targetRatio;
+    sx = (sourceWidth - sw) / 2;
+  } else {
+    sh = sourceWidth / targetRatio;
+    sy = (sourceHeight - sh) / 2;
+  }
+  context.drawImage(media, sx, sy, sw, sh, rect.x, rect.y, rect.width, rect.height);
+}
+
+function drawFullscreenPlatformUi(context, platform) {
+  context.save();
+  context.fillStyle = "#fff";
+  context.strokeStyle = "#fff";
+  context.lineWidth = 5;
+  context.shadowColor = "rgba(0,0,0,.78)";
+  context.shadowBlur = 12;
+
+  if (platform === "tiktok") {
+    uiText(context, "Following     For You", 540, 74, 31, "center", 800);
+    uiText(context, "LIVE", 72, 75, 25, "left", 800);
+    drawActionRail(context, 982, 850, ["♡", "38.4K", "◯", "864", "↗", "Share"]);
+    drawAvatar(context, 982, 710, "TT", "#16161a", "#00f2ea");
+    drawBottomCopy(context, "@yourbrand", "Your caption appears here. Keep key creative above this stack.", "♫  Original sound · yourbrand", 98, 1480);
+    drawCtaBar(context, 82, 1708, 916, 92, "Sponsored", "Learn more  ›");
+    drawBottomNav(context, ["Home", "Shop", "+", "Inbox", "Profile"]);
+  } else if (platform === "instagram-reels") {
+    uiText(context, "Reels", 62, 82, 38, "left", 800);
+    uiText(context, "⌄", 174, 80, 34, "left", 800);
+    uiText(context, "▣", 1005, 82, 36, "right", 700);
+    drawActionRail(context, 988, 900, ["♡", "12.8K", "○", "318", "⌁", "Share"]);
+    drawBottomCopy(context, "●  yourbrand     Follow", "Sponsored  ·  Your caption appears here…", "♫  Original audio", 70, 1455);
+    drawCtaBar(context, 55, 1690, 970, 92, "Visit Instagram profile", "Shop now  ›");
+    drawBottomNav(context, ["⌂", "⌕", "＋", "Reels", "●"]);
+  } else if (platform === "facebook-reels") {
+    uiText(context, "‹", 52, 84, 54, "left", 400);
+    uiText(context, "Reels", 112, 82, 39, "left", 800);
+    uiText(context, "⌕     ◯", 1018, 82, 34, "right", 700);
+    drawActionRail(context, 988, 900, ["♡", "8.2K", "○", "406", "↗", "Share"]);
+    drawBottomCopy(context, "●  Your Brand     Follow", "Sponsored  ·  Your caption appears here…", "♫  Original audio", 70, 1460);
+    drawCtaBar(context, 55, 1695, 970, 92, "Learn more about this offer", "Learn more  ›");
+    drawBottomNav(context, ["Home", "Video", "Friends", "Bell", "Menu"]);
+  } else if (platform === "stories") {
+    drawStoryProgress(context);
+    drawAvatar(context, 70, 99, "IG", "#ff4f9a", "#ffb13b");
+    uiText(context, "yourbrand   Sponsored", 120, 100, 25, "left", 700);
+    uiText(context, "•••", 1015, 98, 32, "right", 800);
+    drawCtaBar(context, 95, 1675, 890, 96, "Sponsored", "Shop now  ↑");
+    uiText(context, "Send message", 540, 1832, 28, "center", 700);
+  } else if (platform === "shorts") {
+    uiText(context, "Shorts", 60, 78, 38, "left", 800);
+    uiText(context, "⌕     ⋮", 1018, 78, 35, "right", 700);
+    drawActionRail(context, 982, 805, ["♡", "21K", "♢", "Dislike", "○", "482", "↗", "Share"]);
+    drawBottomCopy(context, "●  @yourbrand     Subscribe", "Your headline or caption appears here…", "♫  Original sound", 62, 1460);
+    drawCtaBar(context, 50, 1692, 980, 98, "Sponsored · Your headline", "Learn more  ›");
+    drawBottomNav(context, ["Home", "Shorts", "+", "Subs", "You"]);
+  }
+  context.restore();
+}
+
+function drawInstagramFeedPreview(context, media) {
+  context.fillStyle = "#fff";
+  context.fillRect(0, 0, 1080, 1920);
+  context.fillStyle = "#0b0b0d";
+  uiText(context, "Instagram", 50, 68, 39, "left", 800, false, "#111");
+  uiText(context, "♡     ◇", 1025, 68, 38, "right", 500, false, "#111");
+  drawAvatar(context, 65, 165, "IG", "#ff4f9a", "#ffb13b", false);
+  uiText(context, "yourbrand", 116, 153, 27, "left", 800, false, "#111");
+  uiText(context, "Sponsored", 116, 184, 21, "left", 500, false, "#666");
+  uiText(context, "•••", 1024, 165, 28, "right", 800, false, "#111");
+  const rect = { x: 0, y: 225, width: 1080, height: 1350 };
+  drawMediaCover(context, media, rect);
+  uiText(context, "♡    ○    ◇", 45, 1635, 40, "left", 500, false, "#111");
+  uiText(context, "▱", 1030, 1635, 40, "right", 500, false, "#111");
+  uiText(context, "8,421 likes", 45, 1698, 25, "left", 800, false, "#111");
+  uiText(context, "yourbrand  Your caption appears below the image…", 45, 1741, 24, "left", 500, false, "#111");
+  uiText(context, "View all 126 comments", 45, 1784, 23, "left", 500, false, "#6f6f78");
+  drawFeedNav(context, ["⌂", "⌕", "＋", "Reels", "●"], false);
+  return rect;
+}
+
+function drawFacebookFeedPreview(context, media) {
+  context.fillStyle = "#f0f2f5";
+  context.fillRect(0, 0, 1080, 1920);
+  context.fillStyle = "#0866ff";
+  uiText(context, "facebook", 42, 72, 44, "left", 800, false, "#0866ff");
+  uiText(context, "⌕   ☰", 1030, 72, 36, "right", 700, false, "#111");
+  context.fillStyle = "#fff";
+  context.fillRect(0, 118, 1080, 1710);
+  drawAvatar(context, 63, 188, "f", "#0866ff", "#0866ff", false);
+  uiText(context, "Your Brand", 116, 176, 27, "left", 800, false, "#111");
+  uiText(context, "Sponsored · 🌐", 116, 210, 21, "left", 500, false, "#65676b");
+  uiText(context, "•••", 1025, 187, 29, "right", 700, false, "#111");
+  uiText(context, "Your post copy can appear above the creative.", 42, 266, 25, "left", 500, false, "#111");
+  const rect = { x: 0, y: 305, width: 1080, height: 1350 };
+  drawMediaCover(context, media, rect);
+  uiText(context, "●  8.4K", 38, 1700, 24, "left", 600, false, "#65676b");
+  uiText(context, "126 comments   43 shares", 1040, 1700, 24, "right", 500, false, "#65676b");
+  context.strokeStyle = "#d6d8dc";
+  context.beginPath(); context.moveTo(38, 1732); context.lineTo(1042, 1732); context.stroke();
+  uiText(context, "♡  Like", 180, 1780, 25, "center", 700, false, "#65676b");
+  uiText(context, "○  Comment", 540, 1780, 25, "center", 700, false, "#65676b");
+  uiText(context, "↗  Share", 900, 1780, 25, "center", 700, false, "#65676b");
+  return rect;
+}
+
+function drawYouTubeWatchPreview(context, media) {
+  context.fillStyle = "#0f0f0f";
+  context.fillRect(0, 0, 1080, 1920);
+  uiText(context, "▶ YouTube", 44, 72, 36, "left", 800);
+  uiText(context, "⌕     ●", 1030, 72, 34, "right", 700);
+  const rect = { x: 0, y: 130, width: 1080, height: 608 };
+  drawMediaCover(context, media, rect);
+  context.fillStyle = "rgba(0,0,0,.68)";
+  context.fillRect(0, 678, 1080, 60);
+  uiText(context, "▶      0:06 / 0:15                              ⚙", 34, 710, 23, "left", 600);
+  uiText(context, "Your video headline appears here", 38, 800, 34, "left", 800);
+  uiText(context, "Sponsored · Your Brand · 124K views", 38, 850, 23, "left", 500, false, "#aaa");
+  drawCtaBar(context, 38, 900, 1004, 104, "Your Brand · Sponsored", "Visit site  ›");
+  uiText(context, "●  Your Brand       Subscribe", 42, 1080, 28, "left", 800);
+  uiText(context, "♡  8.4K       ↗ Share       ⇩ Download", 42, 1170, 27, "left", 700);
+  context.fillStyle = "#272727";
+  roundRect(context, 38, 1240, 1004, 260, 24); context.fill();
+  uiText(context, "Up next", 70, 1292, 24, "left", 800);
+  uiText(context, "Related video and recommendation content", 70, 1350, 27, "left", 600);
+  return rect;
+}
+
+function drawContextGuide(context, mediaRect, preview) {
+  context.save();
+  const guide = CROP_PRESETS.find((preset) => preset.id === preview.guide);
+  if (guide?.margins) {
+    const [frameWidth, frameHeight] = guide.targetFrame;
+    const scaleX = mediaRect.width / frameWidth;
+    const scaleY = mediaRect.height / frameHeight;
+    const safe = {
+      x: mediaRect.x + guide.margins.left * scaleX,
+      y: mediaRect.y + guide.margins.top * scaleY,
+      width: mediaRect.width - (guide.margins.left + guide.margins.right) * scaleX,
+      height: mediaRect.height - (guide.margins.top + guide.margins.bottom) * scaleY
+    };
+    context.fillStyle = hexToRgba(guide.color, 0.32);
+    context.fillRect(mediaRect.x, mediaRect.y, mediaRect.width, safe.y - mediaRect.y);
+    context.fillRect(mediaRect.x, safe.y + safe.height, mediaRect.width, mediaRect.y + mediaRect.height - safe.y - safe.height);
+    context.fillRect(mediaRect.x, safe.y, safe.x - mediaRect.x, safe.height);
+    context.fillRect(safe.x + safe.width, safe.y, mediaRect.x + mediaRect.width - safe.x - safe.width, safe.height);
+    context.strokeStyle = "#fff";
+    context.lineWidth = 5;
+    context.strokeRect(safe.x + 2.5, safe.y + 2.5, safe.width - 5, safe.height - 5);
+    drawPill(context, "SAFE AREA", safe.x + 18, safe.y + 18, guide.color);
+  } else if (preview.ratio === 4 / 5) {
+    context.strokeStyle = "#bf77ff";
+    context.lineWidth = 7;
+    context.strokeRect(mediaRect.x + 3.5, mediaRect.y + 3.5, mediaRect.width - 7, mediaRect.height - 7);
+    drawPill(context, "FULL 4:5 FRAME USABLE", mediaRect.x + 22, mediaRect.y + 22, "#bf77ff");
+  } else {
+    context.strokeStyle = "#4e9bff";
+    context.lineWidth = 7;
+    context.strokeRect(mediaRect.x + 3.5, mediaRect.y + 3.5, mediaRect.width - 7, mediaRect.height - 7);
+  }
+  context.restore();
+}
+
+function uiText(context, text, x, y, size, align = "left", weight = 700, shadow = true, color = "#fff") {
+  context.save();
+  context.font = `${weight} ${size}px Arial, sans-serif`;
+  context.textAlign = align;
+  context.textBaseline = "middle";
+  context.fillStyle = color;
+  if (shadow) {
+    context.shadowColor = "rgba(0,0,0,.85)";
+    context.shadowBlur = 10;
+  }
+  context.fillText(text, x, y);
+  context.restore();
+}
+
+function drawAvatar(context, x, y, initials, colorA, colorB, shadow = true) {
+  context.save();
+  if (shadow) { context.shadowColor = "rgba(0,0,0,.8)"; context.shadowBlur = 10; }
+  const gradient = context.createLinearGradient(x - 32, y - 32, x + 32, y + 32);
+  gradient.addColorStop(0, colorA);
+  gradient.addColorStop(1, colorB);
+  context.fillStyle = gradient;
+  context.beginPath(); context.arc(x, y, 34, 0, Math.PI * 2); context.fill();
+  context.strokeStyle = "#fff"; context.lineWidth = 4; context.stroke();
+  uiText(context, initials, x, y + 1, 19, "center", 800, false);
+  context.restore();
+}
+
+function drawActionRail(context, x, startY, items) {
+  items.forEach((item, index) => {
+    const y = startY + index * 64;
+    const isIcon = index % 2 === 0;
+    uiText(context, item, x, y, isIcon ? 42 : 20, "center", isIcon ? 500 : 700);
+  });
+}
+
+function drawBottomCopy(context, handle, caption, audio, x, y) {
+  uiText(context, handle, x, y, 28, "left", 800);
+  uiText(context, caption, x, y + 48, 25, "left", 600);
+  uiText(context, audio, x, y + 94, 23, "left", 600);
+}
+
+function drawCtaBar(context, x, y, width, height, left, right) {
+  context.save();
+  context.shadowColor = "rgba(0,0,0,.55)";
+  context.shadowBlur = 18;
+  context.fillStyle = "rgba(20,20,23,.88)";
+  roundRect(context, x, y, width, height, 18); context.fill();
+  context.strokeStyle = "rgba(255,255,255,.36)"; context.lineWidth = 2; context.stroke();
+  uiText(context, left, x + 26, y + height / 2, 24, "left", 600);
+  uiText(context, right, x + width - 26, y + height / 2, 25, "right", 800);
+  context.restore();
+}
+
+function drawBottomNav(context, items) {
+  context.save();
+  context.fillStyle = "rgba(5,5,7,.9)";
+  context.fillRect(0, 1835, 1080, 85);
+  items.forEach((item, index) => uiText(context, item, 108 + index * 216, 1876, item.length > 2 ? 18 : 29, "center", 700));
+  context.restore();
+}
+
+function drawFeedNav(context, items, dark = true) {
+  context.save();
+  context.fillStyle = dark ? "#070708" : "#fff";
+  context.fillRect(0, 1835, 1080, 85);
+  items.forEach((item, index) => uiText(context, item, 108 + index * 216, 1877, 31, "center", 600, false, dark ? "#fff" : "#111"));
+  context.restore();
+}
+
+function drawStoryProgress(context) {
+  const gap = 12;
+  const width = (1000 - gap * 3) / 4;
+  for (let index = 0; index < 4; index += 1) {
+    context.fillStyle = index === 0 ? "#fff" : "rgba(255,255,255,.48)";
+    roundRect(context, 40 + index * (width + gap), 30, width, 6, 3); context.fill();
+  }
+}
+
+async function exportPlatformPreview() {
+  if (!currentAsset) return;
+  renderPlatformPreview();
+  const blob = await new Promise((resolve) => elements.platformPreviewCanvas.toBlob(resolve, "image/png"));
+  if (!blob) return;
+  const preview = PLATFORM_PREVIEWS.find((candidate) => candidate.id === activeContextId);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${preview.id}-preview.png`;
+  link.hidden = true;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function createGuideCanvas(preset) {
